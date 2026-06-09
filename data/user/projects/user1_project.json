@@ -1,0 +1,201 @@
+{
+  "tasks": [
+    {
+      "id": "G1",
+      "name": "Phase 1: Foundation & Setup",
+      "duration": 0,
+      "isGroup": true,
+      "collapsed": false,
+      "color": "#64748b",
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "T1",
+      "name": "Database Models & State Schema",
+      "duration": 4,
+      "isGroup": false,
+      "parentId": "G1",
+      "color": "#3b82f6",
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "T2",
+      "name": "Core Dependency Engine",
+      "duration": 6,
+      "dependency": "T1",
+      "offset": 0,
+      "isGroup": false,
+      "parentId": "G1",
+      "color": "#6366f1",
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "M1",
+      "name": "Phase 1 Sign-Off (Milestone)",
+      "duration": 0,
+      "isGroup": false,
+      "parentId": "G1",
+      "color": "#ec4899",
+      "isFixed": true,
+      "fixedStartDate": "2026-06-16",
+      "isMilestone": true,
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "G2",
+      "name": "Phase 2: Client Interface",
+      "duration": 0,
+      "isGroup": true,
+      "collapsed": false,
+      "color": "#64748b",
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "T3",
+      "name": "Task Sheet Table & Tree UI",
+      "duration": 5,
+      "dependency": "T2",
+      "offset": 1,
+      "isGroup": false,
+      "parentId": "G2",
+      "color": "#10b981",
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "T4",
+      "name": "SVG Timeline Gantt Chronology",
+      "duration": 7,
+      "dependency": "T3",
+      "offset": 0,
+      "isGroup": false,
+      "parentId": "G2",
+      "color": "#14b8a6",
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "G3",
+      "name": "Phase 3: Validation & Launch",
+      "duration": 0,
+      "isGroup": true,
+      "collapsed": false,
+      "color": "#64748b",
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "FX",
+      "name": "External Compliance Audit (Hard Dates)",
+      "duration": 5,
+      "isGroup": false,
+      "parentId": "G3",
+      "color": "#a855f7",
+      "isFixed": true,
+      "fixedStartDate": "2026-06-22",
+      "fixedEndDate": "2026-06-29",
+      "isMilestone": false,
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "T5",
+      "name": "Circular Loop Detector",
+      "duration": 3,
+      "dependency": "T3, T4",
+      "offset": 0,
+      "isGroup": false,
+      "parentId": "G3",
+      "color": "#f59e0b",
+      "startDate": "",
+      "endDate": ""
+    },
+    {
+      "id": "T6",
+      "name": "Production Compile & Verify",
+      "duration": 2,
+      "dependency": "T5",
+      "offset": 1,
+      "isGroup": false,
+      "parentId": "G3",
+      "color": "#f43f5e",
+      "startDate": "",
+      "endDate": ""
+    }
+  ],
+  "projectStartDate": "2026-06-08",
+  "workWeekends": false,
+  "holidays": [
+    {
+      "id": "H_1780966206545_751",
+      "name": "Spring Date HOlidays",
+      "date": "2026-06-29"
+    },
+    {
+      "id": "H_1780966246845_625",
+      "name": "test",
+      "date": "2026-06-30"
+    },
+    {
+      "id": "H_US_1",
+      "date": "2026-01-01",
+      "name": "New Year's Day"
+    },
+    {
+      "id": "H_US_2",
+      "date": "2026-01-19",
+      "name": "Martin Luther King Jr. Day"
+    },
+    {
+      "id": "H_US_3",
+      "date": "2026-02-16",
+      "name": "Presidents' Day"
+    },
+    {
+      "id": "H_US_4",
+      "date": "2026-05-25",
+      "name": "Memorial Day"
+    },
+    {
+      "id": "H_US_5",
+      "date": "2026-06-19",
+      "name": "Juneteenth National Independence Day"
+    },
+    {
+      "id": "H_US_6",
+      "date": "2026-07-04",
+      "name": "Independence Day"
+    },
+    {
+      "id": "H_US_7",
+      "date": "2026-09-07",
+      "name": "Labor Day"
+    },
+    {
+      "id": "H_US_8",
+      "date": "2026-10-12",
+      "name": "Columbus Day"
+    },
+    {
+      "id": "H_US_9",
+      "date": "2026-11-11",
+      "name": "Veterans Day"
+    },
+    {
+      "id": "H_US_10",
+      "date": "2026-11-26",
+      "name": "Thanksgiving Day"
+    },
+    {
+      "id": "H_US_11",
+      "date": "2026-12-25",
+      "name": "Christmas Day"
+    }
+  ],
+  "savedAt": "2026-06-09T00:52:36.258Z"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Project Timeline Generator",
+  "description": "A professional project timeline tool featuring a dependency-based scheduling engine, circular dependency detection, task grouping, and an interactive Gantt chart.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

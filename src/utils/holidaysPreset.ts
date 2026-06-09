@@ -1,0 +1,19 @@
+export interface Holiday {
+  id: string;
+  date: string; // YYYY-MM-DD
+  name: string;
+}
+
+export const USA_2026_HOLIDAYS: Holiday[] = [
+  { id: "H_US_1", date: "2026-01-01", name: "New Year's Day" },
+  { id: "H_US_2", date: "2026-01-19", name: "Martin Luther King Jr. Day" },
+  { id: "H_US_3", date: "2026-02-16", name: "Presidents' Day" },
+  { id: "H_US_4", date: "2026-05-25", name: "Memorial Day" },
+  { id: "H_US_5", date: "2026-06-19", name: "Juneteenth National Independence Day" },
+  { id: "H_US_6", date: "2026-07-04", name: "Independence Day" },
+  { id: "H_US_7", date: "2026-09-07", name: "Labor Day" },
+  { id: "H_US_8", date: "2026-10-12", name: "Columbus Day" },
+  { id: "H_US_9", date: "2026-11-11", name: "Veterans Day" },
+  { id: "H_US_10", date: "2026-11-26", name: "Thanksgiving Day" },
+  { id: "H_US_11", date: "2026-12-25", name: "Christmas Day" }
+];
