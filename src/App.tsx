@@ -208,6 +208,7 @@ export default function App() {
   const [isProjectMenuOpen, setIsProjectMenuOpen] = useState<boolean>(false);
   const [dependencyMode, setDependencyMode] = useState<"none" | "all" | "multiple">("none");
   const [saveFilename, setSaveFilename] = useState<string>("Sample_0Project");
+  const [currentProjectName, setCurrentProjectName] = useState<string>("Sample_0Project");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isLoadingSaved, setIsLoadingSaved] = useState<boolean>(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -258,7 +259,7 @@ export default function App() {
 
   // Open save modal
   const openSaveModal = () => {
-    setSaveFilename("Sample_0Project");
+    setSaveFilename(currentProjectName || "Sample_0Project");
     setIsSaveModalOpen(true);
   };
 
@@ -290,6 +291,7 @@ export default function App() {
         const data = await response.json();
         const timeStr = new Date().toLocaleTimeString();
         setSyncStatus(`${data.message || `Project successfully saved to server cache at ${timeStr}!`}`);
+        setCurrentProjectName(saveFilename);
         setIsSaveModalOpen(false);
       } else {
         const errData = await response.json().catch(() => ({}));
@@ -344,9 +346,12 @@ export default function App() {
           setProjectStartDate(data.projectStartDate || "");
           setWorkWeekends(data.workWeekends ?? false);
           setHolidays(data.holidays || []);
-          setSyncStatus(`Project loaded successfully from "${filename}"!`);
-          setSyncError(null);
-          handleCloseLoadModal();
+           setSyncStatus(`Project loaded successfully from "${filename}"!`);
+           setSyncError(null);
+           const nameWithoutExt = filename.replace(/\.json$/i, "");
+           setSaveFilename(nameWithoutExt);
+           setCurrentProjectName(nameWithoutExt);
+           handleCloseLoadModal();
         } else {
           setSyncError("Failed to load project from server.");
         }
@@ -720,7 +725,7 @@ export default function App() {
             <div>
               <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 Project Timeline Generator
-                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.2.5</span>
+                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.2.6</span>
               </h1>
               <p className="text-xs text-slate-500 font-medium">
                 Professional dependency scheduling & visual Gantt chronologies
@@ -882,7 +887,11 @@ export default function App() {
           </div>
 
           {/* Scheduler Output Alerts / Controls Section */}
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-3.5 w-full lg:w-auto shrink-0">
+          <div className="flex flex-col items-end gap-2 w-full lg:w-auto shrink-0">
+            <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded whitespace-nowrap self-end">
+              Current Project: {currentProjectName}
+            </span>
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3.5 w-full">
             {schedulerResult.error && (
               <div
                 className={`p-3 border rounded-lg text-xs flex items-start gap-2 flex-1 transition-all outline-hidden ${
@@ -931,13 +940,17 @@ export default function App() {
               <span className="text-xs bg-indigo-50/60 text-indigo-700 border border-indigo-100/60 px-3 py-1.5 rounded-lg font-bold font-sans whitespace-nowrap">
                 {tasks.length} {tasks.length === 1 ? "timeline item" : "timeline items"}
               </span>
-              <span className={`text-xs border px-3 py-1.5 rounded-lg font-bold font-sans whitespace-nowrap ${
-                holidays.length === 0 
-                  ? "bg-slate-50 text-slate-500 border-slate-200" 
-                  : "bg-amber-50 text-amber-700 border-amber-200"
-              }`}>
+              <span 
+                onClick={() => setIsHolidayModalOpen(true)}
+                className={`text-xs border px-3 py-1.5 rounded-lg font-bold font-sans whitespace-nowrap cursor-pointer transition-colors ${
+                  holidays.length === 0 
+                    ? "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700" 
+                    : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300"
+                }`}
+              >
                 {holidays.length} {holidays.length === 1 ? "day blocked" : "days blocked"}
               </span>
+            </div>
             </div>
           </div>
         </section>
@@ -1209,6 +1222,179 @@ export default function App() {
               <button
                 onClick={handleCloseLoadModal}
                 className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HOLIDAY MANAGEMENT MODAL OVERLAY */}
+      {isHolidayModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsHolidayModalOpen(false)}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl relative flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                  <CalendarDays className="w-5 h-5 text-indigo-600" />
+                  Manage Holidays & Blocked Days
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">Configure non-working days for your project schedule.</p>
+              </div>
+              <button
+                onClick={() => setIsHolidayModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* Col 1: Quick Presets & File Integrations */}
+              <div className="bg-slate-50/70 border border-slate-200/80 p-4 rounded-xl flex flex-col gap-4">
+                <div>
+                  <h4 className="font-bold text-xs text-indigo-950 uppercase tracking-wider mb-1">Presets & Imports</h4>
+                  <p className="text-[10px] text-slate-500">Inject holiday calendars directly into your schedules.</p>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-bold text-slate-600 block">USA Federal Holidays (2026):</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { handleLoadUSPHolidays(true); }}
+                      className="px-2.5 py-2 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[10px] text-center"
+                    >
+                      Replace List
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { handleLoadUSPHolidays(false); }}
+                      className="px-2.5 py-2 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-lg cursor-pointer transition-all active:scale-[0.97] text-[10px] text-center"
+                    >
+                      Merge List
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 border-t border-slate-200 pt-3">
+                  <span className="text-[10px] font-bold text-slate-600 block">Import Custom List (.json):</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="px-2 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-center cursor-pointer transition-all text-[10px] block select-none">
+                      Replace
+                      <input type="file" accept=".json" className="hidden" onChange={(e) => { handleImportHolidaysJSON(e, true); e.target.value = ""; }} />
+                    </label>
+                    <label className="px-2 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-center cursor-pointer transition-all text-[10px] block select-none">
+                      Merge
+                      <input type="file" accept=".json" className="hidden" onChange={(e) => { handleImportHolidaysJSON(e, false); e.target.value = ""; }} />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Col 2: Add Manual Custom Holiday Form */}
+              <div className="border border-slate-200/80 p-4 rounded-xl flex flex-col gap-3">
+                <div>
+                  <h4 className="font-bold text-xs text-indigo-950 uppercase tracking-wider mb-1">Add Custom Holiday</h4>
+                  <p className="text-[10px] text-slate-500">Insert single designated project non-working days manually.</p>
+                </div>
+
+                <form onSubmit={handleManualAddHoliday} className="flex flex-col gap-3 mt-1">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Name / Description</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g., Spring Equinox Break"
+                      value={newHolidayName}
+                      onChange={(e) => setNewHolidayName(e.target.value)}
+                      className="border border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-150 outline-none px-3 py-2 rounded-lg text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Calendar Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={newHolidayDate}
+                      onChange={(e) => setNewHolidayDate(e.target.value)}
+                      className="border border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-150 outline-none px-3 py-2 rounded-lg text-xs font-mono"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-indigo-900 hover:bg-indigo-950 text-white font-bold py-2 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[10px] mt-1"
+                  >
+                    Add Blocked Holiday
+                  </button>
+                </form>
+              </div>
+
+              {/* Col 3: Current Registered Holidays Table */}
+              <div className="border border-slate-200/80 p-4 rounded-xl flex flex-col">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                  <div>
+                    <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider">Active Block List</h4>
+                    <p className="text-[10px] text-slate-500">{holidays.length} dates currently registered.</p>
+                  </div>
+                  {holidays.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm("Are you sure you want to wipe all active holiday states?")) {
+                          setHolidays([]);
+                        }
+                      }}
+                      className="text-[9px] font-extrabold text-red-600 hover:text-red-800 uppercase tracking-wider cursor-pointer"
+                    >
+                      Wipe All
+                    </button>
+                  )}
+                </div>
+
+                <div className="overflow-y-auto max-h-[250px] divide-y divide-slate-100 flex flex-col pr-1">
+                  {holidays.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400 font-medium italic text-xs">
+                      No holiday dates registered.
+                    </div>
+                  ) : (
+                    [...holidays]
+                      .sort((a, b) => a.date.localeCompare(b.date))
+                      .map((h) => (
+                        <div key={h.id} className="py-2 flex items-center justify-between gap-2 group">
+                          <div className="min-w-0 flex-1">
+                            <span className="font-bold text-slate-800 block truncate leading-none text-xs">{h.name}</span>
+                            <span className="text-[10px] text-slate-500 font-bold font-mono inline-block mt-0.5">{h.date}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setHolidays(prev => prev.filter(item => item.id !== h.id))}
+                            className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer"
+                            title={`Remove: ${h.name}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex justify-end">
+              <button
+                onClick={() => setIsHolidayModalOpen(false)}
+                className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold rounded-lg transition-colors cursor-pointer"
               >
                 Close
               </button>

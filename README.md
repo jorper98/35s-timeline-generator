@@ -1,5 +1,5 @@
 # Project Timeline Generator
-**Version:** v1.2.5
+**Version:** v1.2.6
 
 Project Home Page:  https://35sites.com/applications/project-timeline-generator/ 
 Project Demo Page:  https://ptgen.35sitesai.com/

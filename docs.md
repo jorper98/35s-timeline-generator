@@ -1,6 +1,6 @@
 # Project Timeline Generator Documentation
 
-**Version:** v1.2.5
+**Version:** v1.2.6
 
 ## Overview
 This documentation provides guidance on using and configuring the Project Timeline Generator.

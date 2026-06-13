@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.6] - 2026-06-13
+- Added "Current Project" badge in the header showing the active project name.
+- Save modal now pre-fills with the current project name instead of defaulting to "Sample_0Project".
+- "Days Blocked" badge now opens the Holiday Management modal on click.
+- Project name is automatically remembered when loading from server.
+
 ## [1.2.5] - 2026-06-13
 - Hide backup files from the main project load list to keep it clean.
 - Added a dedicated "History" button and modal view to see, load, or delete backups for a specific project file.
