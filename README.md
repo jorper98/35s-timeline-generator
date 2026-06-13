@@ -1,5 +1,14 @@
 # Project Timeline Generator
-**Version:** v1.2.4
+**Version:** v1.2.5
+
+Project Home Page:  https://35sites.com/applications/project-timeline-generator/ 
+Project Demo Page:  https://ptgen.35sitesai.com/
+
+git repository:     https://github.com/jorper98/35s-timeline-generator
+
+
+
+
 
 ## Description
 A web-based project timeline generator.   It creates a visual Gantt chart to that allows users to create, manage, and visualize project timelines with support for task dependencies, offsets, group folders, milestones, and holiday scheduling.
@@ -34,12 +43,24 @@ This is Not intended to as a replacement to a project management but rather as a
 ### Docker Deployment
 To run the application fully in a Docker container:
 
-1. Ensure Docker and Docker Compose are installed on your system.
-2. Build and start the container:
+1. ssh to the target server
+2. go to the directory where you want to clone the repository  (It will create a new directory called 35s-timeline-generator)
+
+3. Clone the repository:
+```bash
+git clone https://github.com/jorper98/35s-timeline-generator.git
+```
+4. cd into the directory
+
+5. Ensure Docker and Docker Compose are installed on your system.
+6. Build and start the container:
    ```bash
    docker-compose up -d --build
    ```
-3. Open your browser and navigate to `http://localhost:3141`
+7. Open your browser and navigate to 
+       if local: `http://localhost:3141`
+       if on a VPS:   http://<your-server-ip>:3141
+       
 4. To stop the container, run:
    ```bash
    docker-compose down

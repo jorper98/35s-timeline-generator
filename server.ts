@@ -76,7 +76,7 @@ async function startServer() {
       }
 
       const files = fs.readdirSync(dirPath)
-        .filter(f => f.endsWith(".json"))
+        .filter(f => f.endsWith(".json") && !f.includes("backup"))
         .map(f => {
           const stats = fs.statSync(path.join(dirPath, f));
           return {
@@ -98,6 +98,42 @@ async function startServer() {
     } catch (error: any) {
       console.error("Error listing projects:", error);
       return res.status(500).json({ error: "Failed to list projects: " + error.message });
+    }
+  });
+
+  // Get backup history for a specific project
+  app.get("/api/projects/:filename/history", (req, res) => {
+    try {
+      const { filename } = req.params;
+      if (!filename || filename.includes("..") || !filename.endsWith(".json")) {
+        return res.status(400).json({ error: "Invalid filename." });
+      }
+
+      const dirPath = path.join(process.cwd(), "data", "user", "projects");
+      if (!fs.existsSync(dirPath)) {
+        return res.json({ history: [] });
+      }
+
+      const nameWithoutExt = path.basename(filename, ".json");
+      const backupPrefix = `${nameWithoutExt}-backup-`;
+
+      const files = fs.readdirSync(dirPath)
+        .filter(f => f.endsWith(".json") && f.startsWith(backupPrefix))
+        .map(f => {
+          const stats = fs.statSync(path.join(dirPath, f));
+          return {
+            filename: f,
+            isBackup: true,
+            size: stats.size,
+            modified: stats.mtime.toISOString()
+          };
+        })
+        .sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime());
+
+      return res.json({ history: files });
+    } catch (error: any) {
+      console.error("Error listing project history:", error);
+      return res.status(500).json({ error: "Failed to list project history: " + error.message });
     }
   });
 

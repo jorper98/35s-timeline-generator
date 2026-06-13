@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.5] - 2026-06-13
+- Hide backup files from the main project load list to keep it clean.
+- Added a dedicated "History" button and modal view to see, load, or delete backups for a specific project file.
+- Created new backend endpoint `/api/projects/:filename/history` to retrieve backup timeline for individual files.
+
 ## [1.2.4] - 2026-06-13
 - Removed "Calendar" and "Workspace" subtitle labels from the Project Actions dropdown for a cleaner menu layout.
 - Fixed duplicate "Manage Holidays..." button that appeared in the Workspace section.

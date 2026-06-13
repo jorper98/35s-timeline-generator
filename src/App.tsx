@@ -328,6 +328,8 @@ export default function App() {
     const handleCloseLoadModal = () => {
       setIsLoadModalOpen(false);
       setServerProjects([]);
+      setSelectedProjectForHistory(null);
+      setProjectHistory([]);
     };
 
     const handleLoadProjectFromFile = async (filename: string) => {
@@ -367,6 +369,7 @@ export default function App() {
         });
         if (response.ok) {
           setServerProjects(prev => prev.filter(p => p.filename !== filename));
+          setProjectHistory(prev => prev.filter(p => p.filename !== filename));
           setSyncStatus(`Deleted "${filename}" successfully.`);
         } else {
           setSyncError("Failed to delete project file.");
@@ -375,6 +378,29 @@ export default function App() {
         console.error("Server delete failed:", err);
         setSyncError("Server connection failure during delete.");
       }
+    };
+
+    const fetchProjectHistory = async (filename: string) => {
+      setIsLoadingHistory(true);
+      setSelectedProjectForHistory(filename);
+      setProjectHistory([]);
+      try {
+        const response = await fetch(`/api/projects/${encodeURIComponent(filename)}/history`);
+        if (response.ok) {
+          const data = await response.json();
+          setProjectHistory(data.history || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch project history:", err);
+        setSyncError("Failed to load project history.");
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    const handleBackToProjects = () => {
+      setSelectedProjectForHistory(null);
+      setProjectHistory([]);
     };
 
     // Export current project state to local JSON file
@@ -456,6 +482,9 @@ export default function App() {
   };
   const [serverProjects, setServerProjects] = useState<ServerProject[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState<boolean>(false);
+  const [selectedProjectForHistory, setSelectedProjectForHistory] = useState<string | null>(null);
+  const [projectHistory, setProjectHistory] = useState<ServerProject[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
 
   // Trigger the scheduling engine instantly on state change
   const schedulerResult = useMemo(() => {
@@ -691,7 +720,7 @@ export default function App() {
             <div>
               <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 Project Timeline Generator
-                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.2.4</span>
+                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.2.5</span>
               </h1>
               <p className="text-xs text-slate-500 font-medium">
                 Professional dependency scheduling & visual Gantt chronologies
@@ -1060,10 +1089,66 @@ export default function App() {
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto flex-1">
-              {isLoadingProjects ? (
+              {isLoadingProjects || isLoadingHistory ? (
                 <div className="flex items-center justify-center py-12 text-slate-500">
                   <RefreshCw className="w-6 h-6 animate-spin mr-3" />
-                  <span className="text-sm font-medium">Loading server files...</span>
+                  <span className="text-sm font-medium">Loading...</span>
+                </div>
+              ) : selectedProjectForHistory ? (
+                <div className="space-y-4">
+                  <button
+                    onClick={handleBackToProjects}
+                    className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors mb-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+                    <span>Back to Projects</span>
+                  </button>
+                  <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+                    <p className="text-xs font-bold text-indigo-900">Backup History for: {selectedProjectForHistory}</p>
+                  </div>
+                  {projectHistory.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                      <Database className="w-8 h-8 mb-2 text-slate-300" />
+                      <p className="text-sm font-medium">No backups found for this project.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {projectHistory.map((backup) => (
+                        <div
+                          key={backup.filename}
+                          className="flex items-center justify-between p-4 border border-amber-200 bg-amber-50/30 rounded-xl hover:bg-amber-50 transition-all group"
+                        >
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            <div className="mt-0.5 p-2 rounded-lg shrink-0 bg-amber-100 text-amber-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-bold text-slate-900 truncate">{backup.filename}</p>
+                              <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                                {new Date(backup.modified).toLocaleString()} · {(backup.size / 1024).toFixed(1)} KB
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 ml-4">
+                            <button
+                              onClick={() => handleLoadProjectFromFile(backup.filename)}
+                              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+                            >
+                              <Upload className="w-3 h-3" />
+                              <span>Load Backup</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProjectFile(backup.filename, true)}
+                              className="px-3 py-1.5 border border-slate-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600 text-slate-500 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : serverProjects.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-500">
@@ -1079,12 +1164,8 @@ export default function App() {
                       className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
                     >
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${project.isBackup ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                          {project.isBackup ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                          ) : (
-                            <Database className="w-4.5 h-4.5" />
-                          )}
+                        <div className="mt-0.5 p-2 rounded-lg shrink-0 bg-indigo-50 text-indigo-600">
+                          <Database className="w-4.5 h-4.5" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-bold text-slate-900 truncate">{project.filename}</p>
@@ -1095,15 +1176,20 @@ export default function App() {
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0 ml-4">
-                        {!project.isBackup && (
-                          <button
-                            onClick={() => handleLoadProjectFromFile(project.filename)}
-                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
-                          >
-                            <Upload className="w-3 h-3" />
-                            <span>Load</span>
-                          </button>
-                        )}
+                        <button
+                          onClick={() => fetchProjectHistory(project.filename)}
+                          className="px-3 py-1.5 border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 text-slate-500 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Clock className="w-3 h-3" />
+                          <span>History</span>
+                        </button>
+                        <button
+                          onClick={() => handleLoadProjectFromFile(project.filename)}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+                        >
+                          <Upload className="w-3 h-3" />
+                          <span>Load</span>
+                        </button>
                         <button
                           onClick={() => handleDeleteProjectFile(project.filename, project.isBackup)}
                           className="px-3 py-1.5 border border-slate-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600 text-slate-500 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
@@ -1175,12 +1261,21 @@ export default function App() {
 
             <div className="w-full h-px bg-slate-100 mb-6" />
 
-            <div className="space-y-2 text-xs text-slate-500">
-              <p>
-                Originally created by: <span className="font-semibold text-slate-700">Jorge Pereira (<a href="https://35sites.com/applications/project-timeline-generator" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">35sites.com LLC</a>)</span>
+            <div className="space-y-3 text-xs text-slate-500 w-full text-center">
+              <p className="flex flex-wrap items-center justify-center gap-2">
+                <a href="https://35sites.com/applications/project-timeline-generator/" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 hover:underline transition-colors">
+                  Project Home Page
+                </a>
+                <span className="text-slate-300">|</span>
+                <a href="https://github.com/jorper98/35s-timeline-generator" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 hover:underline transition-colors">
+                  GitHub Repository
+                </a>
+              </p>
+              <p className="pt-3 border-t border-slate-100 mt-3">
+                Created by: <span className="font-semibold text-slate-700">Jorge Pereira (35sites.com LLC)</span>
               </p>
               <p>
-                Provided with <span className="font-semibold text-indigo-600">MIT License</span>
+                Provided under <span className="font-semibold text-indigo-600">MIT License</span>
               </p>
             </div>
 
@@ -1234,7 +1329,7 @@ export default function App() {
       {/* FOOTER METRICS BAR */}
       <footer className="bg-white border-t border-slate-200 py-4 mt-auto">
         <div className="w-full px-4 md:px-8 text-center text-xs text-slate-450 font-medium">
-          <span>By Jorge Pereira (<a href="https://35sites.com/" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">35sites.com LLC</a>).</span>
+          <span>By Jorge Pereira (<a href="https://35sites.com/applications/project-timeline-generator/" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">35sites.com LLC</a>).</span>
         </div>
       </footer>
     </div>

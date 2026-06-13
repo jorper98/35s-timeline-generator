@@ -40,4 +40,4 @@ The Project Timeline Generator is a professional desktop utility designed to hel
 - The "Est. Completion" badge in the header updates dynamically to show the latest calculated end date across all tasks.
 
 ---
-*By Jorge Pereira (35sites.com LLC).*
+*By Jorge Pereira (<a href="https://35sites.com/applications/project-timeline-generator/" target="_blank" rel="noopener noreferrer">35sites.com LLC</a>).*
