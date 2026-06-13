@@ -1,7 +1,7 @@
 {
   "name": "react-example",
   "private": true,
-  "version": "1.2.2",
+  "version": "1.2.4",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -11,9 +11,11 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "date-fns": "^4.4.0",
     "express": "^4.21.2",
     "lucide-react": "^0.546.0",
+    "marked": "^18.0.5",
     "react": "^19.0.1",
     "react-dom": "^19.0.1"
   },

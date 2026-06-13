@@ -27,7 +27,7 @@ async function startServer() {
       }
 
       // Sanitize filename
-      let safeFilename = filename ? filename.trim() : "user1_project";
+      let safeFilename = filename ? filename.trim() : "Sample_0Project";
       if (!safeFilename.endsWith(".json")) {
         safeFilename += ".json";
       }
@@ -104,7 +104,7 @@ async function startServer() {
   // Load specific project file
   app.get("/api/projects/load", (req, res) => {
     try {
-      const filename = (req.query.file as string) || "user1_project.json";
+      const filename = (req.query.file as string) || "Sample_0Project.json";
       if (!filename || filename.includes("..") || !filename.endsWith(".json")) {
         return res.status(400).json({ error: "Invalid filename." });
       }

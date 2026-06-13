@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.4] - 2026-06-13
+- Removed "Calendar" and "Workspace" subtitle labels from the Project Actions dropdown for a cleaner menu layout.
+- Fixed duplicate "Manage Holidays..." button that appeared in the Workspace section.
+- Cleaned up duplicated modal blocks in the component tree.
+
+## [1.2.3] - 2026-06-13
+- Fixed User Guide modal to properly render Markdown markup using the `marked` library and Tailwind Typography plugin.
+- Moved Holiday management into a dedicated "Manage Holidays..." modal accessible from the "Project Actions" menu.
+- Replaced the large inline collapsible Holidays section with a compact badge showing the number of blocked days.
+- Renamed the default project filename from `user1_project` to `Sample_0Project` across the application.
+
 ## [1.2.2] - 2026-06-13
 - Added automatic localStorage persistence to remember the current project state across browser refreshes.
 - Streamlined header actions into a unified "Project Actions" dropdown menu.
@@ -8,7 +19,7 @@
 
 ## [1.2.1] - 2026-06-13
 - Added "Load from Server" modal to view, load, and delete saved project datasets.
-- Implemented automatic timestamped backups (`user1_project-backup-YYYYMMDDHHmmss.json`) before overwriting existing server files.
+- Implemented automatic timestamped backups (`Sample_0Project-backup-YYYYMMDDHHmmss.json`) before overwriting existing server files.
 - Added API endpoints for listing, loading specific files, and deleting server-side project files.
 
 ## [1.1.0] 

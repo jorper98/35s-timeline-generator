@@ -18,8 +18,10 @@ import {
   Save,
   Download,
   Upload,
-  Database
+  Database,
+  BookOpen
 } from "lucide-react";
+import { marked } from "marked";
 
 const INITIAL_DEMO_TASKS: Task[] = [
   {
@@ -190,11 +192,22 @@ export default function App() {
       console.error("Failed to save local state", e);
     }
   }, [tasks, projectStartDate, workWeekends, holidays]);
-  const [showHolidaysConfig, setShowHolidaysConfig] = useState<boolean>(false);
+  
   const [newHolidayName, setNewHolidayName] = useState<string>("");
   const [newHolidayDate, setNewHolidayDate] = useState<string>("");
 
-  // Persistence Server Sync States
+  // Modal State Controls
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
+  const [isUserGuideModalOpen, setIsUserGuideModalOpen] = useState<boolean>(false);
+  const [userGuideContent, setUserGuideContent] = useState<string>("");
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
+  const [isHolidayModalOpen, setIsHolidayModalOpen] = useState<boolean>(false);
+  const [isProjectMenuOpen, setIsProjectMenuOpen] = useState<boolean>(false);
+  const [dependencyMode, setDependencyMode] = useState<"none" | "all" | "multiple">("none");
+  const [saveFilename, setSaveFilename] = useState<string>("Sample_0Project");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isLoadingSaved, setIsLoadingSaved] = useState<boolean>(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -245,7 +258,7 @@ export default function App() {
 
   // Open save modal
   const openSaveModal = () => {
-    setSaveFilename("user1_project");
+    setSaveFilename("Sample_0Project");
     setIsSaveModalOpen(true);
   };
 
@@ -379,7 +392,7 @@ export default function App() {
       );
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `user1_project_export_${new Date().toISOString().split('T')[0]}.json`);
+      downloadAnchor.setAttribute("download", `Sample_0Project_export_${new Date().toISOString().split('T')[0]}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
@@ -424,16 +437,16 @@ export default function App() {
     event.target.value = "";
   };
 
-  // Modal State Controls
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
-  const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
-  const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
-  const [isProjectMenuOpen, setIsProjectMenuOpen] = useState<boolean>(false);
-  const [dependencyMode, setDependencyMode] = useState<"none" | "all" | "multiple">("none");
-  const [saveFilename, setSaveFilename] = useState<string>("user1_project");
-  
+  // Fetch user guide content when modal opens
+  useEffect(() => {
+    if (isUserGuideModalOpen && !userGuideContent) {
+      fetch('/user-guide.md')
+        .then((res) => res.text())
+        .then((text) => setUserGuideContent(text))
+        .catch(() => setUserGuideContent("Failed to load user guide."));
+    }
+  }, [isUserGuideModalOpen, userGuideContent]);
+
   // Server Load State
   type ServerProject = {
     filename: string;
@@ -678,7 +691,7 @@ export default function App() {
             <div>
               <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 Project Timeline Generator
-                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.2.2</span>
+                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.2.4</span>
               </h1>
               <p className="text-xs text-slate-500 font-medium">
                 Professional dependency scheduling & visual Gantt chronologies
@@ -745,12 +758,17 @@ export default function App() {
                       />
                     </label>
 
-                    <div className="px-3 py-2 border-t border-slate-100 mt-1">
-                      <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Workspace</p>
-                    </div>
+                    <button
+                      onClick={() => { setIsHolidayModalOpen(true); setIsProjectMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                    >
+                      <CalendarDays className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Manage Holidays...</span>
+                    </button>
+
                     <button
                       onClick={() => { handleClearTimeline(); setIsProjectMenuOpen(false); }}
-                      className="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                      className="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors border-t border-slate-100 mt-1 pt-2.5"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Clear Sheet</span>
@@ -884,188 +902,16 @@ export default function App() {
               <span className="text-xs bg-indigo-50/60 text-indigo-700 border border-indigo-100/60 px-3 py-1.5 rounded-lg font-bold font-sans whitespace-nowrap">
                 {tasks.length} {tasks.length === 1 ? "timeline item" : "timeline items"}
               </span>
+              <span className={`text-xs border px-3 py-1.5 rounded-lg font-bold font-sans whitespace-nowrap ${
+                holidays.length === 0 
+                  ? "bg-slate-50 text-slate-500 border-slate-200" 
+                  : "bg-amber-50 text-amber-700 border-amber-200"
+              }`}>
+                {holidays.length} {holidays.length === 1 ? "day blocked" : "days blocked"}
+              </span>
             </div>
           </div>
         </section>
-
-        {/* COLLAPSIBLE HOLIDAYS & NON-WORKING DAYS SECTION */}
-        <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setShowHolidaysConfig(!showHolidaysConfig)}
-            className="w-full px-5 py-3.5 bg-slate-50/70 hover:bg-slate-50 flex items-center justify-between text-left transition-colors cursor-pointer select-none"
-          >
-            <div className="flex items-center gap-2.5">
-              <CalendarDays className="w-4 h-4 text-indigo-900" />
-              <div>
-                <h3 className="font-bold text-xs text-slate-900">Holidays & Blocked Non-Working Days</h3>
-                <p className="text-[10px] text-slate-500 font-medium">
-                  {holidays.length} holiday {holidays.length === 1 ? "day" : "days"} currently registered. Add custom dates or load USA Federal presets to automatically skip calendar dates during timelines.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-[9px] font-extrabold px-2.5 py-1 rounded-lg ${
-                holidays.length === 0 ? "bg-slate-100 text-slate-600 border border-slate-200" : "bg-amber-50 text-amber-800 border border-amber-200"
-              }`}>
-                {holidays.length === 0 ? "NONE BLOCKED" : `${holidays.length} BLOCKED`}
-              </span>
-              <span className="text-slate-400 text-[10px] font-bold">
-                {showHolidaysConfig ? "▼" : "▶"}
-              </span>
-            </div>
-          </button>
-
-          {showHolidaysConfig && (
-            <div className="p-4 border-t border-slate-200 bg-white grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in text-xs leading-relaxed">
-              
-              {/* Col 1: Quick Presets & File Integrations */}
-              <div className="bg-slate-50/70 border border-slate-200/80 p-3.5 rounded-xl flex flex-col gap-3.5">
-                <div>
-                  <h4 className="font-bold text-xs text-indigo-950 uppercase tracking-wider mb-0.5">Preset & File Interfaces</h4>
-                  <p className="text-[10px] text-slate-500">Inject holiday calendars directly into your schedules using standard assets or offline local files.</p>
-                </div>
-
-                {/* 2026 USA Holidays Preset buttons */}
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold text-slate-600 block">USA Federal Holidays (2026):</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleLoadUSPHolidays(true)}
-                      className="px-2.5 py-1.5 bg-indigo-900 hover:bg-indigo-950 text-white font-bold rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[10px] text-center"
-                      title="Replace current list with USA holidays list"
-                    >
-                      Replace list
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleLoadUSPHolidays(false)}
-                      className="px-2.5 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-emerald-800 border-emerald-100 bg-emerald-50/10 font-bold rounded-lg cursor-pointer transition-all active:scale-[0.97] text-[10px] text-center shadow-3xs"
-                      title="Merge USA holidays list with current holiday dates"
-                    >
-                      Merge list
-                    </button>
-                  </div>
-                </div>
-
-                {/* Import Holiday list via JSON File input choices */}
-                <div className="flex flex-col gap-1.5 border-t border-slate-200 pt-3">
-                  <span className="text-[10px] font-bold text-slate-600 block">Import Custom Holiday List (.json):</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="px-2 py-1.5 border border-slate-200 bg-white hover:bg-slate-55 text-slate-700 font-bold rounded-lg text-center cursor-pointer transition-all text-[10px] block select-none">
-                      Replace List
-                      <input
-                        type="file"
-                        accept=".json"
-                        className="hidden"
-                        onChange={(e) => handleImportHolidaysJSON(e, true)}
-                      />
-                    </label>
-                    <label className="px-2 py-1.5 border border-slate-200 bg-white hover:bg-slate-55 text-slate-700 font-bold rounded-lg text-center cursor-pointer transition-all text-[10px] block select-none">
-                      Merge List
-                      <input
-                        type="file"
-                        accept=".json"
-                        className="hidden"
-                        onChange={(e) => handleImportHolidaysJSON(e, false)}
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Col 2: Add Manual custom holiday Form */}
-              <div className="border border-slate-200/80 p-3.5 rounded-xl flex flex-col gap-3">
-                <div>
-                  <h4 className="font-bold text-xs text-indigo-950 uppercase tracking-wider mb-0.5">Add Custom Bank Holiday</h4>
-                  <p className="text-[10px] text-slate-500">Insert single designated project non-working days manually below.</p>
-                </div>
-
-                <form onSubmit={handleManualAddHoliday} className="flex flex-col gap-2.5 mt-1">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Holiday Name / Description</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g., Spring Equinox Break"
-                      value={newHolidayName}
-                      onChange={(e) => setNewHolidayName(e.target.value)}
-                      className="border border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-150 outline-none px-2.5 py-2 rounded-lg text-xs"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Calendar Date</label>
-                    <input
-                      type="date"
-                      required
-                      value={newHolidayDate}
-                      onChange={(e) => setNewHolidayDate(e.target.value)}
-                      className="border border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-150 outline-none px-2.5 py-1 rounded-lg text-xs font-mono"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-indigo-900 hover:bg-indigo-950 text-white font-bold py-2 rounded-lg cursor-pointer transition-all active:scale-[0.98] text-[10px] mt-1"
-                  >
-                    Add Blocked Holiday
-                  </button>
-                </form>
-              </div>
-
-              {/* Col 3: Current Registered Holidays Table (Scrollable list with clean deletes) */}
-              <div className="border border-slate-200/80 p-3.5 rounded-xl flex flex-col gap-1.5">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                  <div>
-                    <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider">Active Block Card Index</h4>
-                    <p className="text-[10px] text-slate-500">Chronological calendar holidays currently in effect.</p>
-                  </div>
-                  {holidays.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm("Are you sure you want to wipe all active holiday states? This triggers complete scheduling rebuilds.")) {
-                          setHolidays([]);
-                        }
-                      }}
-                      className="text-[9px] font-extrabold text-red-650 hover:text-red-800 uppercase tracking-wider cursor-pointer"
-                    >
-                      Wipe All
-                    </button>
-                  )}
-                </div>
-
-                <div className="overflow-y-auto max-h-[160px] divide-y divide-slate-100 flex flex-col pr-1 scrollbar-thin">
-                  {holidays.length === 0 ? (
-                    <div className="py-7 text-center text-slate-400 font-medium italic text-[11px]">
-                      No holiday dates registered. Gantt scheduling is using standard weekend skips only.
-                    </div>
-                  ) : (
-                    [...holidays]
-                      .sort((a, b) => a.date.localeCompare(b.date))
-                      .map((h) => (
-                        <div key={h.id} className="py-1.5 flex items-center justify-between gap-1.5 group">
-                          <div className="min-w-0 flex-1">
-                            <span className="font-bold text-slate-800 block truncate leading-none text-[11px] select-all">{h.name}</span>
-                            <span className="text-[9px] text-slate-500 font-bold font-mono inline-block mt-0.5">{h.date}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setHolidays(prev => prev.filter(item => item.id !== h.id))}
-                            className="p-1 hover:bg-rose-50 text-slate-350 hover:text-red-500 rounded transition-colors cursor-pointer select-none"
-                            title={`Remove holiday block: ${h.name}`}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))
-                  )}
-                </div>
-              </div>
-
-            </div>
-          )}
-        </div>
 
         {/* UNIFIED SPREADSHEET & GANTT CHRONOLOGY TIMELINE GRID (100% WIDTH) */}
         <div className="w-full">
@@ -1133,7 +979,7 @@ export default function App() {
                       value={saveFilename}
                       onChange={(e) => setSaveFilename(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ""))}
                       className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                      placeholder="user1_project"
+                      placeholder="Sample_0Project"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
