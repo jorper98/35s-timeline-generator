@@ -6,6 +6,8 @@ import { createServer as createViteServer } from "vite";
 async function startServer() {
   const app = express();
   const PORT = parseInt(process.env.PORT || '3141', 10);
+  const packageJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf8"));
+  const VERSION = packageJson.version || "1.1.0";
 
   // Middleware to parse JSON request bodies
   app.use(express.json({ limit: "10mb" }));
@@ -82,7 +84,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Project Timeline Generator v${VERSION} running on http://localhost:${PORT}`);
   });
 }
 

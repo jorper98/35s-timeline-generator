@@ -307,6 +307,8 @@ export default function App() {
   // Modal State Controls
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
+  const [dependencyMode, setDependencyMode] = useState<"none" | "all" | "multiple">("none");
 
   // Trigger the scheduling engine instantly on state change
   const schedulerResult = useMemo(() => {
@@ -525,14 +527,28 @@ export default function App() {
       {/* HEADER BAR */}
       <header className="bg-white border-b border-slate-200 py-4 px-4 md:px-8 sticky top-0 z-40 shadow-xs">
         <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-bold text-base shadow-xs select-none">
-              Σ
-            </div>
+           <div className="flex items-center gap-3">
+             <svg
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 128 128"
+               className="w-8 h-8 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+               aria-label="Project Timeline Generator Logo"
+               onClick={() => setIsAboutModalOpen(true)}
+             >
+               <rect x="6" y="6" width="116" height="116" rx="18" fill="#ffffff" stroke="#e6edf7" strokeWidth="2" />
+               <line x1="18" y1="32" x2="110" y2="32" stroke="#eef6ff" strokeWidth="2" strokeLinecap="round" />
+               <g transform="translate(18,40)">
+                 <rect x="0" y="0" width="62" height="12" rx="6" fill="#2563eb" />
+                 <rect x="6" y="20" width="86" height="12" rx="6" fill="#60a5fa" />
+                 <rect x="18" y="40" width="52" height="12" rx="6" fill="#93c5fd" />
+                 <circle cx="102" cy="26" r="4.5" fill="#f59e0b" stroke="#fff" strokeWidth="1.5" />
+                 <line x1="76" y1="-8" x2="76" y2="64" stroke="#0f1724" strokeWidth="2" strokeOpacity="0.12" strokeLinecap="round" />
+               </g>
+             </svg>
             <div>
               <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 Project Timeline Generator
-                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.0.0</span>
+                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.1.0</span>
               </h1>
               <p className="text-xs text-slate-500 font-medium">
                 Professional dependency scheduling & visual Gantt chronologies
@@ -690,7 +706,7 @@ export default function App() {
               </div>
             )}
 
-            <div className="flex items-center gap-2.5 sm:ml-auto shrink-0 select-none">
+            <div className="flex items-center gap-2.5 sm:ml-auto shrink-0 select-none flex-wrap">
               <button
                 onClick={handleOpenAddModal}
                 className="bg-indigo-900 hover:bg-indigo-950 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-900/10 cursor-pointer transition-all active:scale-[0.98] text-xs font-sans whitespace-nowrap"
@@ -698,6 +714,23 @@ export default function App() {
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>Add Task / Group</span>
               </button>
+
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                <label htmlFor="dep-mode" className="text-[10px] font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
+                  Show dependencies:
+                </label>
+                <select
+                  id="dep-mode"
+                  value={dependencyMode}
+                  onChange={(e) => setDependencyMode(e.target.value as "none" | "all" | "multiple")}
+                  className="text-xs border border-slate-200 rounded px-2 py-1 bg-white font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer shadow-2xs"
+                >
+                  <option value="none">Default: None</option>
+                  <option value="all">All</option>
+                  <option value="multiple">Multiple</option>
+                </select>
+              </div>
+
               <span className="text-xs bg-indigo-50/60 text-indigo-700 border border-indigo-100/60 px-3 py-1.5 rounded-lg font-bold font-sans whitespace-nowrap">
                 {tasks.length} {tasks.length === 1 ? "timeline item" : "timeline items"}
               </span>
@@ -895,6 +928,7 @@ export default function App() {
             onSelectTaskToEdit={handleSelectTaskToEdit}
             workWeekends={workWeekends}
             holidays={holidays}
+            dependencyMode={dependencyMode}
           />
         </div>
 
@@ -910,6 +944,62 @@ export default function App() {
           onDeleteTask={handleDeleteTask}
         />
       </main>
+
+      {/* ABOUT MODAL OVERLAY */}
+      {isAboutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsAboutModalOpen(false)}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-8 relative flex flex-col items-center text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsAboutModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 128 128"
+              className="w-32 h-32 mb-6 drop-shadow-sm"
+              aria-label="Project Timeline Generator Logo"
+            >
+              <rect x="6" y="6" width="116" height="116" rx="18" fill="#ffffff" stroke="#e6edf7" strokeWidth="2" />
+              <line x1="18" y1="32" x2="110" y2="32" stroke="#eef6ff" strokeWidth="2" strokeLinecap="round" />
+              <g transform="translate(18,40)">
+                <rect x="0" y="0" width="62" height="12" rx="6" fill="#2563eb" />
+                <rect x="6" y="20" width="86" height="12" rx="6" fill="#60a5fa" />
+                <rect x="18" y="40" width="52" height="12" rx="6" fill="#93c5fd" />
+                <circle cx="102" cy="26" r="4.5" fill="#f59e0b" stroke="#fff" strokeWidth="1.5" />
+                <line x1="76" y1="-8" x2="76" y2="64" stroke="#0f1724" strokeWidth="2" strokeOpacity="0.12" strokeLinecap="round" />
+              </g>
+            </svg>
+
+            <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">
+              Project Timeline Generator
+            </h2>
+
+            <p className="text-sm text-slate-500 font-medium mb-6 max-w-xs">
+              Simple dependency scheduling &amp; visual Gantt chronologies.
+            </p>
+
+            <div className="w-full h-px bg-slate-100 mb-6" />
+
+            <div className="space-y-2 text-xs text-slate-500">
+              <p>
+                Originally created by: <span className="font-semibold text-slate-700">Jorge Pereira (<a href="https://35sites.com/applications/project-timeline-generator" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">35sites.com LLC</a>)</span>
+              </p>
+              <p>
+                Provided with <span className="font-semibold text-indigo-600">MIT License</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER METRICS BAR */}
       <footer className="bg-white border-t border-slate-200 py-4 mt-auto">

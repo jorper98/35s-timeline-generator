@@ -42,6 +42,7 @@ interface UnifiedTimelineProps {
   onSelectTaskToEdit: (task: Task) => void;
   workWeekends?: boolean;
   holidays?: Holiday[];
+  dependencyMode: "none" | "all" | "multiple";
 }
 
 export default function UnifiedTimeline({
@@ -52,13 +53,13 @@ export default function UnifiedTimeline({
   onToggleGroupCollapse,
   onSelectTaskToEdit,
   workWeekends = false,
-  holidays = []
+  holidays = [],
+  dependencyMode
 }: UnifiedTimelineProps) {
   // Configurable pixels per day state (starts at 20px per day as explicitly requested)
   const [dayWidth, setDayWidth] = useState<number>(20);
   const [scale, setScale] = useState<"days" | "weeks" | "months">("weeks");
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
-  const [dependencyMode, setDependencyMode] = useState<"all" | "none" | "multiple">("all");
 
   const visibleRows = useMemo(() => {
     return structuredTasks.filter((r) => r.isVisible);
@@ -287,28 +288,6 @@ export default function UnifiedTimeline({
 
         {/* INTERACTIVE SCALE RESOLUTION AND DAY ZOOM CONTROL PANEL */}
         <div className="flex items-center gap-4 animate-fade-in">
-          {/* DEPENDENCY LINES FILTER SELECTION */}
-          <div className="flex items-center bg-slate-200/50 p-0.5 rounded-lg border border-slate-200" id="gantt-dependency-lines-selector">
-            <span className="text-[9px] font-extrabold text-slate-500 uppercase px-1.5 select-none tracking-wider font-sans">
-              Deps:
-            </span>
-            {(["all", "none", "multiple"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setDependencyMode(mode)}
-                className={`px-2.5 py-1 text-[10px] uppercase tracking-wider font-extrabold rounded-md transition-all cursor-pointer ${
-                  dependencyMode === mode
-                    ? "bg-indigo-900 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/50"
-                }`}
-                title={mode === "multiple" ? "Show only tasks that have multiple dependencies" : `Show ${mode} dependencies`}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
-
           {/* SCALE RESOLUTION SELECTION SEGMENTS (Days, Weeks, Months scale) */}
           <div className="flex items-center bg-slate-200/50 p-0.5 rounded-lg border border-slate-200" id="gantt-resolution-selector">
             {(["days", "weeks", "months"] as const).map((s) => (
