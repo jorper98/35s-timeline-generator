@@ -1183,6 +1183,50 @@ export default function App() {
                 Provided with <span className="font-semibold text-indigo-600">MIT License</span>
               </p>
             </div>
+
+            <button
+              onClick={() => { setIsAboutModalOpen(false); setIsUserGuideModalOpen(true); }}
+              className="w-full mt-6 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-bold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2 border border-indigo-200"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>View User Guide</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* USER GUIDE MODAL OVERLAY */}
+      {isUserGuideModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsUserGuideModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl relative flex flex-col max-h-[85vh]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <BookOpen className="w-6 h-6 text-indigo-600" />
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">User Guide</h2>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">How to use the Project Timeline Generator</p>
+                </div>
+              </div>
+              <button onClick={() => setIsUserGuideModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 prose prose-slate max-w-none prose-sm prose-headings:font-bold prose-headings:text-slate-900 prose-a:text-indigo-600 hover:prose-a:text-indigo-700">
+              <div 
+                className="markdown-content"
+                dangerouslySetInnerHTML={{ 
+                  __html: userGuideContent 
+                    ? (marked.parse(userGuideContent) as string) 
+                    : "<p>Loading user guide...</p>" 
+                }} 
+              />
+            </div>
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex justify-between items-center">
+              <span className="text-xs text-slate-500 font-medium">By Jorge Pereira (35sites.com LLC).</span>
+              <button onClick={() => setIsUserGuideModalOpen(false)} className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold rounded-lg transition-colors cursor-pointer">Close</button>
+            </div>
           </div>
         </div>
       )}
