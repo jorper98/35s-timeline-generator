@@ -152,13 +152,44 @@ const INITIAL_DEMO_TASKS: Task[] = [
 ];
 
 export default function App() {
+  // Initialize state from localStorage for session persistence, fallback to defaults
+  const getLocalState = () => {
+    try {
+      const saved = localStorage.getItem("ptg_local_state_v1");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  };
+
+  const localState = getLocalState();
+
   // June 8, 2026 is a Monday (perfect standard default matching our timeline constraints)
-  const [projectStartDate, setProjectStartDate] = useState<string>("2026-06-08");
-  const [workWeekends, setWorkWeekends] = useState<boolean>(false);
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_DEMO_TASKS);
+  const [projectStartDate, setProjectStartDate] = useState<string>(
+    localState?.projectStartDate || "2026-06-08"
+  );
+  const [workWeekends, setWorkWeekends] = useState<boolean>(
+    localState?.workWeekends !== undefined ? localState.workWeekends : false
+  );
+  const [tasks, setTasks] = useState<Task[]>(
+    localState?.tasks || INITIAL_DEMO_TASKS
+  );
 
   // Holidays & non-working days states
-  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>(
+    localState?.holidays || []
+  );
+
+  // Auto-save to localStorage on any state change to remember work across refreshes
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "ptg_local_state_v1",
+        JSON.stringify({ tasks, projectStartDate, workWeekends, holidays })
+      );
+    } catch (e) {
+      console.error("Failed to save local state", e);
+    }
+  }, [tasks, projectStartDate, workWeekends, holidays]);
   const [showHolidaysConfig, setShowHolidaysConfig] = useState<boolean>(false);
   const [newHolidayName, setNewHolidayName] = useState<string>("");
   const [newHolidayDate, setNewHolidayDate] = useState<string>("");
@@ -169,8 +200,10 @@ export default function App() {
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Load project dataset from full-stack server on application startup
+  // Load project dataset from full-stack server on application startup ONLY IF no local state exists
   useEffect(() => {
+    if (localState) return; // Prioritize local session state over server default
+
     const loadProjectFromServer = async () => {
       setIsLoadingSaved(true);
       try {
@@ -397,6 +430,7 @@ export default function App() {
   const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
   const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
+  const [isProjectMenuOpen, setIsProjectMenuOpen] = useState<boolean>(false);
   const [dependencyMode, setDependencyMode] = useState<"none" | "all" | "multiple">("none");
   const [saveFilename, setSaveFilename] = useState<string>("user1_project");
   
@@ -568,10 +602,6 @@ export default function App() {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const handleLoadDemoPreset = () => {
-    setTasks(INITIAL_DEMO_TASKS);
-  };
-
   const handleClearTimeline = () => {
     setTasks([]);
   };
@@ -648,7 +678,7 @@ export default function App() {
             <div>
               <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 Project Timeline Generator
-                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.1.0</span>
+                <span className="text-slate-500 font-semibold text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-100/60 px-1.5 py-0.5 rounded">v1.2.2</span>
               </h1>
               <p className="text-xs text-slate-500 font-medium">
                 Professional dependency scheduling & visual Gantt chronologies
@@ -657,68 +687,78 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto text-xs">
-            {/* Server Save Button */}
-            <button
-              onClick={openSaveModal}
-              disabled={isSaving}
-              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
-              title="Save current project to server with a custom filename"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>{isSaving ? "Saving..." : "Save to Server"}</span>
-            </button>
+            {/* Unified Project Actions Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setIsProjectMenuOpen(!isProjectMenuOpen)}
+                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+              >
+                <FolderTree className="w-3.5 h-3.5" />
+                <span>Project Actions</span>
+                <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
 
-            {/* Load from Server Button */}
-            <button
-              onClick={handleOpenLoadModal}
-              className="px-3.5 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5 font-semibold bg-white shadow-2xs"
-              title="Load project from server"
-            >
-              <Database className="w-3.5 h-3.5 text-slate-500" />
-              <span>Load from Server</span>
-            </button>
+              {isProjectMenuOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-[50]" 
+                    onClick={() => setIsProjectMenuOpen(false)} 
+                  />
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 z-[60] py-2 overflow-hidden">
+                    <div className="px-3 py-2 border-b border-slate-100">
+                      <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Server</p>
+                    </div>
+                    <button
+                      onClick={() => { openSaveModal(); setIsProjectMenuOpen(false); }}
+                      disabled={isSaving}
+                      className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors disabled:opacity-50"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{isSaving ? "Saving..." : "Save to Server..."}</span>
+                    </button>
+                    <button
+                      onClick={() => { handleOpenLoadModal(); setIsProjectMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2 transition-colors"
+                    >
+                      <Database className="w-3.5 h-3.5" />
+                      <span>Load from Server...</span>
+                    </button>
 
-            {/* Export JSON Button */}
-            <button
-              onClick={handleExportJSON}
-              className="px-3.5 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5 font-semibold bg-white shadow-2xs"
-              title="Export project configuration as a local JSON file download"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
-              <span>Export JSON</span>
-            </button>
+                    <div className="px-3 py-2 border-t border-b border-slate-100 mt-1">
+                      <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Local File</p>
+                    </div>
+                    <button
+                      onClick={() => { handleExportJSON(); setIsProjectMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Export JSON</span>
+                    </button>
+                    <label className="w-full block px-4 py-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors cursor-pointer">
+                      <Upload className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="flex-1">Import JSON</span>
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={(e) => { handleImportJSON(e); setIsProjectMenuOpen(false); }}
+                        className="hidden"
+                      />
+                    </label>
 
-            {/* Import JSON Button */}
-            <label className="px-3.5 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5 font-semibold bg-white shadow-2xs select-none">
-              <Upload className="w-3.5 h-3.5 text-slate-500" />
-              <span>Import JSON</span>
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportJSON}
-                className="hidden"
-              />
-            </label>
-
-            {/* Visual separator */}
-            <div className="h-6 w-px bg-slate-200 hidden xl:block" />
-
-            <button
-              onClick={handleLoadDemoPreset}
-              className="px-3.5 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5 font-medium bg-white"
-              title="Reset tasks to initial demo template"
-            >
-              <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
-              <span>Reset Preset</span>
-            </button>
-            <button
-              onClick={handleClearTimeline}
-              className="px-3.5 py-2 border border-slate-200 hover:border-red-200 rounded-lg hover:bg-red-50 hover:text-red-600 text-slate-500 transition-colors cursor-pointer flex items-center gap-1.5 font-medium bg-white"
-              title="Wipe timeline dataset empty"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-500" />
-              <span>Clear Sheet</span>
-            </button>
+                    <div className="px-3 py-2 border-t border-slate-100 mt-1">
+                      <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Workspace</p>
+                    </div>
+                    <button
+                      onClick={() => { handleClearTimeline(); setIsProjectMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Clear Sheet</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>

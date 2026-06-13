@@ -1,0 +1,202 @@
+{
+  "tasks": [
+    {
+      "id": "G1",
+      "name": "Phase 1: Initiation",
+      "duration": 0,
+      "isGroup": true,
+      "collapsed": false,
+      "color": "#64748b"
+    },
+    {
+      "id": "T1",
+      "name": "Kickoff & Requirements",
+      "duration": 2,
+      "parentId": "G1",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T2",
+      "name": "Environment Setup",
+      "duration": 1,
+      "dependency": "T1",
+      "parentId": "G1",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T3",
+      "name": "Architecture Design",
+      "duration": 2,
+      "dependency": "T2",
+      "parentId": "G1",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "G2",
+      "name": "Phase 2: Development",
+      "duration": 0,
+      "isGroup": true,
+      "collapsed": false,
+      "color": "#64748b"
+    },
+    {
+      "id": "T4",
+      "name": "Database Schema",
+      "duration": 2,
+      "dependency": "T3",
+      "parentId": "G2",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T5",
+      "name": "Backend Module A",
+      "duration": 3,
+      "dependency": "T4",
+      "parentId": "G2",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T6",
+      "name": "Backend Module B",
+      "duration": 3,
+      "dependency": "T4",
+      "parentId": "G2",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T7",
+      "name": "Frontend Skeleton",
+      "duration": 2,
+      "dependency": "T3",
+      "parentId": "G2",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "M1",
+      "name": "Milestone 1: Setup Complete",
+      "duration": 0,
+      "isGroup": false,
+      "isMilestone": true,
+      "dependency": "T5, T6, T7",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "T8",
+      "name": "Frontend Integration A",
+      "duration": 2,
+      "dependency": "T5, T7",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T9",
+      "name": "Frontend Integration B",
+      "duration": 2,
+      "dependency": "T6, T7",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T10",
+      "name": "Initial Unit Testing",
+      "duration": 1,
+      "dependency": "T8, T9",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "M2",
+      "name": "Milestone 2: Payment 1 Due",
+      "duration": 0,
+      "isGroup": false,
+      "isMilestone": true,
+      "dependency": "T10",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "T11",
+      "name": "Payment 1 Processing",
+      "duration": 1,
+      "dependency": "M2",
+      "color": "#dc2626"
+    },
+    {
+      "id": "G3",
+      "name": "Phase 3: Advanced Features",
+      "duration": 0,
+      "isGroup": true,
+      "collapsed": false,
+      "color": "#64748b"
+    },
+    {
+      "id": "T12",
+      "name": "Advanced Features Dev",
+      "duration": 3,
+      "dependency": "T11",
+      "parentId": "G3",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T13",
+      "name": "Third-Party Integration",
+      "duration": 3,
+      "dependency": "T12",
+      "parentId": "G3",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "M3",
+      "name": "Milestone 3: Features Complete",
+      "duration": 0,
+      "isGroup": false,
+      "isMilestone": true,
+      "dependency": "T13",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "T14",
+      "name": "Payment 2 Processing",
+      "duration": 1,
+      "dependency": "M3",
+      "color": "#dc2626"
+    },
+    {
+      "id": "T15",
+      "name": "System Integration Testing",
+      "duration": 3,
+      "dependency": "T14",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T16",
+      "name": "Bug Fixing & Refinement",
+      "duration": 3,
+      "dependency": "T15",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "M4",
+      "name": "Milestone 4: Final Payment Due",
+      "duration": 0,
+      "isGroup": false,
+      "isMilestone": true,
+      "dependency": "T16",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "T17",
+      "name": "Final Payment Processing",
+      "duration": 1,
+      "dependency": "M4",
+      "color": "#dc2626"
+    },
+    {
+      "id": "T18",
+      "name": "UAT & Handover",
+      "duration": 2,
+      "dependency": "T17",
+      "color": "#3b82f6"
+    }
+  ],
+  "projectStartDate": "2026-06-15",
+  "workWeekends": false,
+  "holidays": [],
+  "savedAt": "2026-06-13T15:41:29.294Z"
+}

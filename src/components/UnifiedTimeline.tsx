@@ -532,7 +532,7 @@ export default function UnifiedTimeline({
               width: `${TOTAL_GRID_WIDTH}px`,
               position: "relative"
             }}
-            className="flex flex-col h-full"
+            className="flex flex-col h-full px-2"
           >
             {/* Double header aligned precisely with 56px height mapping */}
             <div 

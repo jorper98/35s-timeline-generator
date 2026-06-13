@@ -1,0 +1,152 @@
+{
+  "tasks": [
+    {
+      "id": "T1",
+      "name": "Initial Consult & Design Approval",
+      "duration": 2,
+      "isFixed": true,
+      "fixedStartDate": "2026-07-06",
+      "fixedEndDate": "2026-07-07",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T2",
+      "name": "Permit Acquisition",
+      "duration": 3,
+      "dependency": "T1",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "M1",
+      "name": "Milestone: Permits Approved",
+      "duration": 0,
+      "isMilestone": true,
+      "dependency": "T2",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "T3",
+      "name": "Delivery of Cabinets & Materials",
+      "duration": 2,
+      "isFixed": true,
+      "fixedStartDate": "2026-07-13",
+      "fixedEndDate": "2026-07-14",
+      "dependency": "M1",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T4",
+      "name": "Demolition & Site Prep",
+      "duration": 2,
+      "dependency": "T3",
+      "color": "#dc2626"
+    },
+    {
+      "id": "T5",
+      "name": "Rough Plumbing",
+      "duration": 2,
+      "dependency": "T4",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T6",
+      "name": "Rough Electrical",
+      "duration": 2,
+      "dependency": "T4",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T7",
+      "name": "Rough Inspections",
+      "duration": 1,
+      "dependency": "T5, T6",
+      "color": "#8b5cf6"
+    },
+    {
+      "id": "M2",
+      "name": "Milestone: Rough-in Complete",
+      "duration": 0,
+      "isMilestone": true,
+      "dependency": "T7",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "T8",
+      "name": "Drywall & Painting",
+      "duration": 3,
+      "dependency": "M2",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T9",
+      "name": "Cabinet Installation",
+      "duration": 3,
+      "dependency": "T8",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T10",
+      "name": "Flooring Installation",
+      "duration": 2,
+      "dependency": "T9",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T11",
+      "name": "Countertop Templating",
+      "duration": 1,
+      "dependency": "T9",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T12",
+      "name": "Countertop Fabrication (Off-site)",
+      "duration": 5,
+      "dependency": "T11",
+      "isFixed": true,
+      "fixedStartDate": "2026-07-27",
+      "fixedEndDate": "2026-07-31",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T13",
+      "name": "Countertop Installation",
+      "duration": 1,
+      "dependency": "T12, T10",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T14",
+      "name": "Appliance Installation",
+      "duration": 1,
+      "dependency": "T13",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "T15",
+      "name": "Final Plumbing & Electrical Finish",
+      "duration": 2,
+      "dependency": "T14, T13",
+      "color": "#3b82f6"
+    },
+    {
+      "id": "M3",
+      "name": "Milestone: Final Inspection Passed",
+      "duration": 0,
+      "isMilestone": true,
+      "dependency": "T15",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "T16",
+      "name": "Final Clean & Client Handover",
+      "duration": 1,
+      "dependency": "M3",
+      "color": "#10b981"
+    }
+  ],
+  "projectStartDate": "2026-07-06",
+  "workWeekends": false,
+  "holidays": [],
+  "savedAt": "2026-06-13T16:36:27.084Z"
+}
