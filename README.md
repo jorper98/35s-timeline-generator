@@ -1,5 +1,5 @@
 # Project Timeline Generator
-**Version:** v1.1.0
+**Version:** v1.2.0
 
 ## Description
 A web-based project timeline generator.   It creates a visual Gantt chart to that allows users to create, manage, and visualize project timelines with support for task dependencies, offsets, group folders, milestones, and holiday scheduling.

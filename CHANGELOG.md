@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2026-06-13
+- Added "Load from Server" modal to view, load, and delete saved project datasets.
+- Implemented automatic timestamped backups (`user1_project-backup-YYYYMMDDHHmmss.json`) before overwriting existing server files.
+- Added API endpoints for listing, loading specific files, and deleting server-side project files.
+
 ## [1.1.0] 
 - Moved dependency visibility toggle to a dropdown menu next to the "Add Task / Group" button.
 - Changed default dependency visibility to "None".

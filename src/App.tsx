@@ -210,8 +210,19 @@ export default function App() {
     loadProjectFromServer();
   }, []);
 
-  // Save current project state to full-stack backend
-  const handleSaveToServer = async () => {
+  // Open save modal
+  const openSaveModal = () => {
+    setSaveFilename("user1_project");
+    setIsSaveModalOpen(true);
+  };
+
+  // Save current project state to full-stack backend with custom filename
+  const confirmSaveToServer = async () => {
+    if (!saveFilename || saveFilename.trim() === "") {
+      setSyncError("Filename cannot be empty.");
+      return;
+    }
+    
     setIsSaving(true);
     setSyncError(null);
     try {
@@ -224,14 +235,16 @@ export default function App() {
           tasks,
           projectStartDate,
           workWeekends,
-          holidays
+          holidays,
+          filename: saveFilename
         })
       });
 
       if (response.ok) {
         const data = await response.json();
         const timeStr = new Date().toLocaleTimeString();
-        setSyncStatus(`Project successfully saved to server cache at ${timeStr}!`);
+        setSyncStatus(`${data.message || `Project successfully saved to server cache at ${timeStr}!`}`);
+        setIsSaveModalOpen(false);
       } else {
         const errData = await response.json().catch(() => ({}));
         setSyncError(errData.error || "Failed to write project JSON to server disk filesystem.");
@@ -244,7 +257,81 @@ export default function App() {
     }
   };
 
-  // Export current project state to local JSON file
+  // Load project list from server
+    const fetchServerProjects = async () => {
+      setIsLoadingProjects(true);
+      try {
+        const response = await fetch("/api/projects/list");
+        if (response.ok) {
+          const data = await response.json();
+          setServerProjects(data.projects || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch server projects:", err);
+        setSyncError("Failed to load server project list.");
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    };
+
+    const handleOpenLoadModal = async () => {
+      setIsLoadModalOpen(true);
+      await fetchServerProjects();
+    };
+
+    const handleCloseLoadModal = () => {
+      setIsLoadModalOpen(false);
+      setServerProjects([]);
+    };
+
+    const handleLoadProjectFromFile = async (filename: string) => {
+      if (!window.confirm(`Load project "${filename}"? This will overwrite your current project state.`)) {
+        return;
+      }
+      try {
+        const response = await fetch(`/api/projects/load?file=${encodeURIComponent(filename)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setTasks(data.tasks || []);
+          setProjectStartDate(data.projectStartDate || "");
+          setWorkWeekends(data.workWeekends ?? false);
+          setHolidays(data.holidays || []);
+          setSyncStatus(`Project loaded successfully from "${filename}"!`);
+          setSyncError(null);
+          handleCloseLoadModal();
+        } else {
+          setSyncError("Failed to load project from server.");
+        }
+      } catch (err) {
+        console.error("Server load failed:", err);
+        setSyncError("Server connection failure during load.");
+      }
+    };
+
+    const handleDeleteProjectFile = async (filename: string, isBackup: boolean) => {
+      const confirmMsg = isBackup 
+        ? `Are you sure you want to delete the backup file "${filename}"?`
+        : `Are you sure you want to delete "${filename}"? This cannot be undone.`;
+      if (!window.confirm(confirmMsg)) {
+        return;
+      }
+      try {
+        const response = await fetch(`/api/projects/delete/${encodeURIComponent(filename)}`, {
+          method: "DELETE"
+        });
+        if (response.ok) {
+          setServerProjects(prev => prev.filter(p => p.filename !== filename));
+          setSyncStatus(`Deleted "${filename}" successfully.`);
+        } else {
+          setSyncError("Failed to delete project file.");
+        }
+      } catch (err) {
+        console.error("Server delete failed:", err);
+        setSyncError("Server connection failure during delete.");
+      }
+    };
+
+    // Export current project state to local JSON file
   const handleExportJSON = () => {
     try {
       const projectPayload = {
@@ -308,7 +395,20 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isAboutModalOpen, setIsAboutModalOpen] = useState<boolean>(false);
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState<boolean>(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
   const [dependencyMode, setDependencyMode] = useState<"none" | "all" | "multiple">("none");
+  const [saveFilename, setSaveFilename] = useState<string>("user1_project");
+  
+  // Server Load State
+  type ServerProject = {
+    filename: string;
+    isBackup: boolean;
+    size: number;
+    modified: string;
+  };
+  const [serverProjects, setServerProjects] = useState<ServerProject[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState<boolean>(false);
 
   // Trigger the scheduling engine instantly on state change
   const schedulerResult = useMemo(() => {
@@ -559,13 +659,23 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto text-xs">
             {/* Server Save Button */}
             <button
-              onClick={handleSaveToServer}
+              onClick={openSaveModal}
               disabled={isSaving}
               className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
-              title="Save current project to ./data/user/projects/user1_project.json"
+              title="Save current project to server with a custom filename"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{isSaving ? "Saving..." : "Save to Server"}</span>
+            </button>
+
+            {/* Load from Server Button */}
+            <button
+              onClick={handleOpenLoadModal}
+              className="px-3.5 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1.5 font-semibold bg-white shadow-2xs"
+              title="Load project from server"
+            >
+              <Database className="w-3.5 h-3.5 text-slate-500" />
+              <span>Load from Server</span>
             </button>
 
             {/* Export JSON Button */}
@@ -944,6 +1054,196 @@ export default function App() {
           onDeleteTask={handleDeleteTask}
         />
       </main>
+
+      {/* SAVE TO SERVER MODAL OVERLAY */}
+      {isSaveModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsSaveModalOpen(false)}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md relative flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">Save to Server</h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">Choose a name for your project dataset.</p>
+              </div>
+              <button
+                onClick={() => setIsSaveModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="save-filename" className="block text-sm font-bold text-slate-700 mb-1.5">
+                    Filename
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="save-filename"
+                      type="text"
+                      value={saveFilename}
+                      onChange={(e) => setSaveFilename(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ""))}
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      placeholder="user1_project"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          confirmSaveToServer();
+                        }
+                      }}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold pointer-events-none">.json</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-2 flex items-center gap-1">
+                    <Info className="w-3 h-3" />
+                    If a file with this name already exists, a timestamped backup will be created automatically.
+                  </p>
+                </div>
+
+                {syncError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-700 font-medium">{syncError}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex justify-end gap-3">
+              <button
+                onClick={() => setIsSaveModalOpen(false)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmSaveToServer}
+                disabled={isSaving || !saveFilename.trim()}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-sm font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-2 shadow-xs"
+              >
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Project</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* LOAD FROM SERVER MODAL OVERLAY */}
+      {isLoadModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={handleCloseLoadModal}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl relative flex flex-col max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">Load from Server</h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">Select a saved dataset to load into your current project.</p>
+              </div>
+              <button
+                onClick={handleCloseLoadModal}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-full hover:bg-slate-100"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-1">
+              {isLoadingProjects ? (
+                <div className="flex items-center justify-center py-12 text-slate-500">
+                  <RefreshCw className="w-6 h-6 animate-spin mr-3" />
+                  <span className="text-sm font-medium">Loading server files...</span>
+                </div>
+              ) : serverProjects.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                  <Database className="w-10 h-10 mb-3 text-slate-300" />
+                  <p className="text-sm font-medium">No saved projects found on the server.</p>
+                  <p className="text-xs text-slate-400 mt-1">Save a project first to see it here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {serverProjects.map((project) => (
+                    <div
+                      key={project.filename}
+                      className="flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
+                    >
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${project.isBackup ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                          {project.isBackup ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          ) : (
+                            <Database className="w-4.5 h-4.5" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-slate-900 truncate">{project.filename}</p>
+                          <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                            {new Date(project.modified).toLocaleString()} · {(project.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 ml-4">
+                        {!project.isBackup && (
+                          <button
+                            onClick={() => handleLoadProjectFromFile(project.filename)}
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+                          >
+                            <Upload className="w-3 h-3" />
+                            <span>Load</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteProjectFile(project.filename, project.isBackup)}
+                          className="px-3 py-1.5 border border-slate-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600 text-slate-500 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex justify-end">
+              <button
+                onClick={handleCloseLoadModal}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-bold rounded-lg transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ABOUT MODAL OVERLAY */}
       {isAboutModalOpen && (
